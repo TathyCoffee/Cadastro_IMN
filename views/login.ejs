@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    form { max-width: 300px; margin: auto; }
+    input { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; }
+    .erro { color: red; text-align: center; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">Login</h2>
+
+  <% if (erro) { %>
+    <p class="erro"><%= erro %></p>
+  <% } %>
+
+  <form method="POST" action="/login">
+    <input type="text" name="usuario" placeholder="Usuário" required>
+    <input type="password" name="senha" placeholder="Senha" required>
+    <button type="submit">Entrar</button>
+  </form>
+</body>
+</html>

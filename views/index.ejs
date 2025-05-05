@@ -19,16 +19,14 @@
       margin-top: 40px;
     }
 
-    /* Estilos para centralizar a logo */
     .logo {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 20px;
-  width: 200px; /* Ajuste o tamanho conforme necessário */
-  height: auto; /* Manter a proporção da imagem */
-}
-
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 20px;
+      width: 200px;
+      height: auto;
+    }
 
     form {
       width: 90%;
@@ -122,6 +120,12 @@
 
   <!-- Logo centralizada no topo -->
   <img src="/img/logo.png" alt="Logo do site" class="logo">
+
+  <% if (typeof usuario !== 'undefined' && usuario) { %>
+    <div style="background-color: #e0f7fa; padding: 10px; text-align: center; font-weight: bold;">
+      Usuário logado: <%= usuario %> | <a href="/logout" style="color: #d32f2f;">Sair</a>
+    </div>
+  <% } %>
 
   <h1><%= beneficiario ? "Editar Beneficiário" : "Cadastrar Beneficiário" %></h1>
 

@@ -3,9 +3,24 @@ const path = require("path");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
 const fs = require("fs");
+const session = require("express-session"); // sessão adicionada
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
+
+// Ativar sessões
+app.use(session({
+  secret: "segredo-super-seguro",
+  resave: false,
+  saveUninitialized: false
+}));
+
+// 🔐 Lista simples de usuários autorizados
+const usuariosAutorizados = [
+  { usuario: "admin", senha: "1234" },
+  { usuario: "gestor", senha: "abcd" },
+  { usuario: "coordenador", senha: "senha123" }
+];
 
 // Banco de dados simulado com todos os campos
 let beneficiarios = [
@@ -43,14 +58,52 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// 🔐 Middleware para proteger rotas
+function autenticar(req, res, next) {
+  if (req.session && req.session.usuario) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
+}
+
+// 🔐 Rota de login (GET)
+app.get("/login", (req, res) => {
+  res.render("login", { erro: null });
+});
+
+// 🔐 Rota de login (POST)
+app.post("/login", (req, res) => {
+  const { usuario, senha } = req.body;
+  const usuarioValido = usuariosAutorizados.find(
+    u => u.usuario === usuario && u.senha === senha
+  );
+
+  if (usuarioValido) {
+    req.session.usuario = usuario;
+    res.redirect("/lista");
+  } else {
+    res.render("login", { erro: "Usuário ou senha inválidos" });
+  }
+});
+
+// 🔐 Rota de logout
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/login");
+});
+
 // Rota de cadastro
 app.get("/", (req, res) => {
   res.render("index", { beneficiario: null });
 });
 
-// Rota de listagem
-app.get("/lista", (req, res) => {
-  res.render("lista", { beneficiarios });
+// Rota de listagem (com autenticação)
+app.get("/lista", autenticar, (req, res) => {
+  res.render("lista", {
+    beneficiarios,
+    usuario: req.session.usuario // Passa o nome do usuário logado
+  });
 });
 
 // Rota para salvar novo beneficiário
@@ -183,7 +236,7 @@ app.get("/exportar-excel", async (req, res) => {
 
 // Rota para exibir o Termo de Uso de Imagem
 app.get("/termo", (req, res) => {
-  res.render("termo"); // Certifique-se de que views/termo.ejs existe
+  res.render("termo");
 });
 
 // Rota para baixar o PDF do Termo de Uso
