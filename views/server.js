@@ -36,7 +36,7 @@ app.post('/login', (req, res) => {
   const autenticado = usuarios.find(u => u.usuario === usuario && u.senha === senha);
   if (autenticado) {
     req.session.usuario = usuario;
-    res.redirect('/');
+    res.redirect('/cadastro'); // Redireciona para o formulário de cadastro após login
   } else {
     res.render('login', { erro: 'Usuário ou senha inválidos' });
   }
@@ -49,7 +49,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Middleware de proteção (opcional)
+// Middleware de proteção
 function autenticado(req, res, next) {
   if (!req.session.usuario) {
     return res.redirect('/login');
@@ -57,8 +57,13 @@ function autenticado(req, res, next) {
   next();
 }
 
-// Página de cadastro
-app.get('/', autenticado, (req, res) => {
+// Rota de apresentação pública
+app.get('/', (req, res) => {
+  res.render('apresentacao'); // Página pública de apresentação
+});
+
+// Página de cadastro (protegida)
+app.get('/cadastro', autenticado, (req, res) => {
   res.render('index', { usuario: req.session.usuario, beneficiario: null });
 });
 
@@ -96,7 +101,7 @@ app.post('/editar/:id', autenticado, (req, res) => {
   res.redirect('/lista');
 });
 
-// Lista de beneficiários
+// Lista de beneficiários (protegida)
 app.get('/lista', autenticado, (req, res) => {
   res.render('lista', { usuario: req.session.usuario, beneficiarios });
 });
@@ -106,6 +111,37 @@ app.get('/termo', (req, res) => {
   res.render('termo');
 });
 
+// Rota para exibir o formulário de troca de senha
+app.get('/trocar-senha', autenticado, (req, res) => {
+  res.render('trocar-senha'); // Exibe o formulário de troca de senha
+});
+
+// Rota para processar a troca de senha
+app.post('/trocar-senha', autenticado, (req, res) => {
+  const { senhaAntiga, novaSenha, confirmarSenha } = req.body;
+  const usuario = usuarios.find(u => u.usuario === req.session.usuario);
+
+  // Verificar se as senhas nova e de confirmação coincidem
+  if (novaSenha !== confirmarSenha) {
+    return res.render('trocar-senha', { erro: 'As senhas não coincidem.' });
+  }
+
+  // Verificar se a senha antiga está correta
+  if (usuario.senha !== senhaAntiga) {
+    return res.render('trocar-senha', { erro: 'Senha antiga incorreta.' });
+  }
+
+  // Atualizar a senha
+  usuario.senha = novaSenha;
+  res.redirect('/perfil'); // Redireciona para a página de perfil após a troca
+});
+
+// Rota de perfil (página simples após login)
+app.get('/perfil', autenticado, (req, res) => {
+  res.render('perfil', { usuario: req.session.usuario });
+});
+
+// Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

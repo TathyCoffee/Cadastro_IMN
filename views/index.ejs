@@ -156,7 +156,7 @@
 
     <div class="modalidades">
       <label>Modalidades:</label><br>
-      <% const modalidadesFixas = ["Judô", "Jiu-Jitsu", "Ballet", "Reforço Escolar", "Teatro", "Dança", "Curso Geral", "Muay-Thay"]; %>
+      <% const modalidadesFixas = ["Judô", "Jiu-Jitsu", "Ballet", "Reforço Escolar", "Teatro", "Dança", "Curso Geral", "Muay-Thay", "Violão"]; %>
       <% modalidadesFixas.forEach(m => { %>
         <label>
           <input type="checkbox" name="modalidades" value="<%= m %>" <%= beneficiario?.modalidades?.includes(m) ? "checked" : "" %>> <%= m %>
