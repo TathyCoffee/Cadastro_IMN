@@ -35,7 +35,8 @@ label {
 }
 
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+input[type="password"] {
   width: 100%;
   padding: 10px;
   box-sizing: border-box;
@@ -89,4 +90,53 @@ th {
 
 .btn-delete:hover {
   background-color: #a71d2a;
+}
+
+/* Mensagens de erro e sucesso */
+.alert {
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Responsividade para dispositivos menores */
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+
+  .logo {
+    width: 120px;
+  }
+
+  button, .btn {
+    padding: 8px 15px;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="password"] {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .form-buttons {
+    margin-top: 15px;
+  }
+
+  table {
+    margin-top: 15px;
+  }
 }

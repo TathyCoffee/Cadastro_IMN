@@ -85,6 +85,13 @@
     .modalidades label {
       display: inline-block;
       margin-right: 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .modalidades input[type="checkbox"] {
+      margin-right: 5px;
+      accent-color: #4CAF50;
     }
 
     p {
@@ -129,6 +136,18 @@
 
   <h1><%= beneficiario ? "Editar Beneficiário" : "Cadastrar Beneficiário" %></h1>
 
+  <% if (sucesso !== undefined && sucesso) { %>
+    <div style="background-color: #c8e6c9; padding: 10px; text-align: center; font-weight: bold;">
+      Cadastro realizado com sucesso!
+    </div>
+  <% } %>
+
+  <% if (erro) { %>
+    <div style="background-color: #ffcdd2; padding: 10px; text-align: center; font-weight: bold;">
+      <%= erro %>
+    </div>
+  <% } %>
+
   <form action="<%= beneficiario ? '/editar/' + beneficiario.id : '/cadastro' %>" method="POST">
     <label for="nome">Nome do Beneficiário:</label>
     <input type="text" id="nome" name="nome" required value="<%= beneficiario?.nome || '' %>">
@@ -159,7 +178,7 @@
       <% const modalidadesFixas = ["Judô", "Jiu-Jitsu", "Ballet", "Reforço Escolar", "Teatro", "Dança", "Curso Geral", "Muay-Thay", "Violão"]; %>
       <% modalidadesFixas.forEach(m => { %>
         <label>
-          <input type="checkbox" name="modalidades" value="<%= m %>" <%= beneficiario?.modalidades?.includes(m) ? "checked" : "" %>> <%= m %>
+          <input type="checkbox" name="modalidades" value="<%= m %>" <%= beneficiario?.modalidades && beneficiario.modalidades.includes(m) ? "checked" : "" %>> <%= m %>
         </label>
       <% }) %>
     </div>
@@ -168,6 +187,7 @@
   </form>
 
   <p><a href="/lista">Ver lista de beneficiários</a></p>
+  <p><a href="/apresentacao">Voltar para apresentação</a></p>
 
 </body>
 </html>

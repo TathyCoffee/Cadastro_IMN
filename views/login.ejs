@@ -2,26 +2,88 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    form { max-width: 300px; margin: auto; }
-    input { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
-    button { width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; }
-    .erro { color: red; text-align: center; margin-bottom: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    form {
+      max-width: 350px;
+      width: 100%;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .erro {
+      color: red;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .esqueci-senha {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .esqueci-senha a {
+      color: #4CAF50;
+      text-decoration: none;
+    }
+    .esqueci-senha a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Login</h2>
-
-  <% if (erro) { %>
-    <p class="erro"><%= erro %></p>
-  <% } %>
-
   <form method="POST" action="/login">
+    <h2>Login</h2>
+
+    <% if (erro) { %>
+      <p class="erro"><%= erro %></p>
+    <% } %>
+
     <input type="text" name="usuario" placeholder="Usuário" required>
     <input type="password" name="senha" placeholder="Senha" required>
     <button type="submit">Entrar</button>
+    
+    <div class="esqueci-senha">
+      <a href="/recuperar-senha">Esqueci minha senha</a>
+    </div>
   </form>
 </body>
 </html>

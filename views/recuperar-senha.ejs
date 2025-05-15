@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Recuperar Senha</title>
+</head>
+<body>
+  <h1>Recuperar Senha</h1>
+
+  <% if (erro) { %>
+    <p style="color: red;"><%= erro %></p>
+  <% } %>
+
+  <% if (sucesso) { %>
+    <p style="color: green;"><%= sucesso %></p>
+  <% } %>
+
+  <form method="POST" action="/recuperar-senha">
+    <label for="usuario">Usuário:</label>
+    <input type="text" id="usuario" name="usuario" required>
+    <button type="submit">Recuperar</button>
+  </form>
+
+  <p><a href="/login">Voltar ao login</a></p>
+</body>
+</html>

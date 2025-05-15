@@ -3,26 +3,114 @@ const path = require("path");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
 const fs = require("fs");
-const session = require("express-session"); // sessão adicionada
+const session = require("express-session");
+const bcrypt = require("bcrypt");
+const usuarios = require("./usuarios"); // Arquivo usuarios.js
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3001; // Se não tiver ambiente, use 3001
 
-// Ativar sessões
+// Sessão
 app.use(session({
   secret: "segredo-super-seguro",
   resave: false,
   saveUninitialized: false
 }));
 
-// 🔐 Lista simples de usuários autorizados
-const usuariosAutorizados = [
-  { usuario: "admin", senha: "1234" },
-  { usuario: "gestor", senha: "abcd" },
-  { usuario: "coordenador", senha: "senha123" }
-];
+// EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-// Banco de dados simulado com todos os campos
+// Middlewares
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
+
+// Middleware de autenticação
+function verificarAutenticacao(req, res, next) {
+  if (!req.session.usuario) {
+    return res.redirect("/login");
+  }
+  next();
+}
+
+// Rota raiz
+app.get("/", (req, res) => {
+  res.redirect("/apresentacao");
+});
+
+// Página pública
+app.get("/apresentacao", (req, res) => {
+  res.render("apresentacao");
+});
+
+// Login
+app.get("/login", (req, res) => {
+  res.render("login", { erro: null });
+});
+
+app.post("/login", (req, res) => {
+  const { usuario, senha } = req.body;
+  const usuarioEncontrado = usuarios.find(u => u.usuario === usuario);
+
+  if (usuarioEncontrado && bcrypt.compareSync(senha, usuarioEncontrado.senha)) {
+    req.session.usuario = usuario;
+    req.session.perfil = usuarioEncontrado.perfil;
+    res.redirect("/cadastro");
+  } else {
+    res.render("login", { erro: "Usuário ou senha incorretos" });
+  }
+});
+
+// Trocar senha
+app.get("/trocar-senha", verificarAutenticacao, (req, res) => {
+  res.render("trocar-senha", { erro: null });
+});
+
+app.post("/trocar-senha", verificarAutenticacao, (req, res) => {
+  const { senhaAntiga, novaSenha, confirmarSenha, usuarioSelecionado } = req.body;
+  const usuarioLogado = req.session.usuario;
+  const perfilLogado = req.session.perfil;
+
+  let usuario;
+  if (perfilLogado === "admin" && usuarioSelecionado) {
+    usuario = usuarios.find(u => u.usuario === usuarioSelecionado);
+  } else {
+    usuario = usuarios.find(u => u.usuario === usuarioLogado);
+  }
+
+  if (!usuario) {
+    return res.render("trocar-senha", { erro: "Usuário não encontrado" });
+  }
+
+  if (perfilLogado !== "admin" && !bcrypt.compareSync(senhaAntiga, usuario.senha)) {
+    return res.render("trocar-senha", { erro: "Senha antiga incorreta" });
+  }
+
+  if (novaSenha !== confirmarSenha) {
+    return res.render("trocar-senha", { erro: "As novas senhas não coincidem" });
+  }
+
+  usuario.senha = bcrypt.hashSync(novaSenha, 10);
+  const novoConteudo = gerarCodigoUsuarios(usuarios);
+  fs.writeFileSync("./usuarios.js", novoConteudo);
+
+  res.redirect("/cadastro");
+});
+
+function gerarCodigoUsuarios(lista) {
+  const linhas = lista.map(u =>
+    `  { usuario: "${u.usuario}", senha: "${u.senha}", perfil: "${u.perfil}" }`
+  );
+  return `const bcrypt = require('bcrypt');\n\nmodule.exports = [\n${linhas.join(",\n")}\n];\n`;
+}
+
+// Logout
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/login");
+});
+
+// Simulação de banco
 let beneficiarios = [
   {
     id: 1,
@@ -50,74 +138,20 @@ let beneficiarios = [
   }
 ];
 
-// Configuração do EJS
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-// Middleware
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
-
-// 🔐 Middleware para proteger rotas
-function autenticar(req, res, next) {
-  if (req.session && req.session.usuario) {
-    next();
-  } else {
-    res.redirect("/login");
-  }
-}
-
-// 🔐 Rota de login (GET)
-app.get("/login", (req, res) => {
-  res.render("login", { erro: null });
-});
-
-// 🔐 Rota de login (POST)
-app.post("/login", (req, res) => {
-  const { usuario, senha } = req.body;
-  const usuarioValido = usuariosAutorizados.find(
-    u => u.usuario === usuario && u.senha === senha
-  );
-
-  if (usuarioValido) {
-    req.session.usuario = usuario;
-    res.redirect("/lista");
-  } else {
-    res.render("login", { erro: "Usuário ou senha inválidos" });
-  }
-});
-
-// 🔐 Rota de logout
-app.get("/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/login");
-});
-
-// Rota de cadastro
-app.get("/", (req, res) => {
-  res.render("index", { beneficiario: null });
-});
-
-// Rota de listagem (com autenticação)
-app.get("/lista", autenticar, (req, res) => {
-  res.render("lista", {
-    beneficiarios,
-    usuario: req.session.usuario // Passa o nome do usuário logado
+// Cadastro
+app.get("/cadastro", verificarAutenticacao, (req, res) => {
+  res.render("index", {
+    beneficiario: null,
+    sucesso: false,
+    erro: null,
+    usuario: req.session.usuario
   });
 });
 
-// Rota para salvar novo beneficiário
-app.post("/cadastro", (req, res) => {
+app.post("/cadastro", verificarAutenticacao, (req, res) => {
   const {
-    nome,
-    nascimento,
-    modalidades,
-    cadNis,
-    tipoDeficiencia,
-    contato,
-    enderecoResponsavel,
-    renda,
-    termoImagem
+    nome, nascimento, modalidades, cadNis, tipoDeficiencia,
+    contato, enderecoResponsavel, renda, termoImagem
   } = req.body;
 
   const novoBeneficiario = {
@@ -125,9 +159,7 @@ app.post("/cadastro", (req, res) => {
     nome,
     nascimento,
     modalidades: modalidades
-      ? Array.isArray(modalidades)
-        ? modalidades
-        : [modalidades]
+      ? Array.isArray(modalidades) ? modalidades : [modalidades]
       : [],
     cadNis,
     tipoDeficiencia,
@@ -138,60 +170,68 @@ app.post("/cadastro", (req, res) => {
   };
 
   beneficiarios.push(novoBeneficiario);
-  res.redirect("/lista");
+
+  res.render("index", {
+    beneficiario: null,
+    sucesso: "Beneficiário cadastrado com sucesso!",
+    erro: null,
+    usuario: req.session.usuario
+  });
 });
 
-// Rota de edição
-app.get("/editar/:id", (req, res) => {
+// Lista
+app.get("/lista", verificarAutenticacao, (req, res) => {
+  res.render("lista", {
+    beneficiarios,
+    usuario: req.session.usuario
+  });
+});
+
+// Editar
+app.get("/editar/:id", verificarAutenticacao, (req, res) => {
   const id = parseInt(req.params.id);
   const beneficiario = beneficiarios.find(b => b.id === id);
 
-  if (!beneficiario) {
-    return res.status(404).send("Beneficiário não encontrado");
-  }
+  if (!beneficiario) return res.status(404).send("Beneficiário não encontrado");
 
-  res.render("index", { beneficiario });
+  res.render("index", {
+    beneficiario,
+    sucesso: false,
+    erro: null,
+    usuario: req.session.usuario
+  });
 });
 
-// Rota para processar edição
-app.post("/editar/:id", (req, res) => {
+app.post("/editar/:id", verificarAutenticacao, (req, res) => {
   const id = parseInt(req.params.id);
   const { nome, nascimento, modalidades } = req.body;
-
   const beneficiario = beneficiarios.find(b => b.id === id);
 
-  if (!beneficiario) {
-    return res.status(404).send("Beneficiário não encontrado");
-  }
+  if (!beneficiario) return res.status(404).send("Beneficiário não encontrado");
 
   beneficiario.nome = nome;
   beneficiario.nascimento = nascimento;
   beneficiario.modalidades = modalidades
-    ? Array.isArray(modalidades)
-      ? modalidades
-      : [modalidades]
+    ? Array.isArray(modalidades) ? modalidades : [modalidades]
     : [];
 
   res.redirect("/lista");
 });
 
-// Rota de exclusão
-app.get("/excluir/:id", (req, res) => {
+// Excluir
+app.get("/excluir/:id", verificarAutenticacao, (req, res) => {
   const id = parseInt(req.params.id);
   beneficiarios = beneficiarios.filter(b => b.id !== id);
   res.redirect("/lista");
 });
 
-// Exportar para PDF
-app.get("/exportar-pdf", (req, res) => {
+// Exportar PDF
+app.get("/exportar-pdf", verificarAutenticacao, (req, res) => {
   const doc = new PDFDocument();
-  const filename = "beneficiarios.pdf";
-
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Disposition", "attachment; filename=beneficiarios.pdf");
 
   doc.pipe(res);
-
   doc.fontSize(20).text("Lista de Beneficiários", { align: "center" }).moveDown();
 
   beneficiarios.forEach((b, i) => {
@@ -206,8 +246,8 @@ app.get("/exportar-pdf", (req, res) => {
   doc.end();
 });
 
-// Exportar para Excel
-app.get("/exportar-excel", async (req, res) => {
+// Exportar Excel
+app.get("/exportar-excel", verificarAutenticacao, async (req, res) => {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Beneficiários");
 
@@ -225,31 +265,28 @@ app.get("/exportar-excel", async (req, res) => {
     });
   });
 
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", "attachment; filename=beneficiarios.xlsx");
 
   await workbook.xlsx.write(res);
+  res.end();
 });
 
-// Rota para exibir o Termo de Uso de Imagem
+// Termo visual e PDF
 app.get("/termo", (req, res) => {
   res.render("termo");
 });
 
-// Rota para baixar o PDF do Termo de Uso
 app.get("/termo-pdf", (req, res) => {
   const termoPath = path.join(__dirname, "public", "docs", "termo-uso-imagem.pdf");
   if (fs.existsSync(termoPath)) {
     res.sendFile(termoPath);
   } else {
-    res.status(404).send("Arquivo do termo não encontrado.");
+    res.status(404).send("Arquivo não encontrado");
   }
 });
 
-// Iniciar o servidor
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

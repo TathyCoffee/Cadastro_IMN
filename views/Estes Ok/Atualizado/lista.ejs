@@ -66,6 +66,7 @@
       text-decoration: none;
       padding: 5px;
       border-radius: 5px;
+      background-color: #f0f8ff;
     }
 
     td a:hover {
@@ -74,6 +75,23 @@
 
     td a:active {
       background-color: #ddd;
+    }
+
+    /* Cores de feedback */
+    .feedback-success {
+      background-color: #c8e6c9;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .feedback-error {
+      background-color: #ffcdd2;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
     }
 
     @media screen and (max-width: 768px) {
@@ -101,11 +119,24 @@
 
   <h1>Lista de Beneficiários</h1>
 
+  <!-- Feedback de Sucesso ou Erro -->
+  <% if (sucesso) { %>
+    <div class="feedback-success">
+      <%= sucesso %>
+    </div>
+  <% } %>
+
+  <% if (erro) { %>
+    <div class="feedback-error">
+      <%= erro %>
+    </div>
+  <% } %>
+
   <div class="acoes">
     <a href="/">Novo Cadastro</a>
     <a href="/exportar-pdf" target="_blank">Exportar PDF</a>
     <a href="/exportar-excel" target="_blank">Exportar Excel</a>
-        <a href="/termo-pdf" target="_blank">Baixar Termo em PDF</a>
+    <a href="/termo-pdf" target="_blank">Baixar Termo em PDF</a>
   </div>
 
   <table>

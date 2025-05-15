@@ -1,0 +1,17 @@
+[
+  {
+    "usuario": "admin",
+    "senha": "$2b$10$fRcKAm0U/Fs1kX5mpmnhLOqkTyVVHRVtqZK0M8W3qnQaY3N2sN6t2",
+    "perfil": "admin"
+  },
+  {
+    "usuario": "gestor",
+    "senha": "$2b$10$nTKoQWGP.A3RUGapmdWAu.4utnWYYPRYfVaME6GVSwvOFTGpmpylS",
+    "perfil": "gestor"
+  },
+  {
+    "usuario": "voluntario",
+    "senha": "$2b$10$e4BPGthn79OZ7YujcfQnfeKVRt2FHi/tK9hld1rp7CJ2DiEV2WnC.",
+    "perfil": "voluntario"
+  }
+]
